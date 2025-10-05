@@ -10,10 +10,12 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "node --watch src/server.ts",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate": "node-pg-migrate --migrations-dir migrations --no-verbose"
   },
   "dependencies": {
     "fastify": "^5.6.1",
+    "node-pg-migrate": "^8.0.3",
     "pg": "^8.16.3"
   },
   "devDependencies": {
