@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import type pg from 'pg';
+import { notesRoutes } from './routes/notes.ts';
 
 export interface AppOptions {
   pool: pg.Pool;
@@ -22,6 +23,8 @@ export function buildApp({ pool, logLevel = 'info' }: AppOptions) {
       return reply.code(503).send({ status: 'unavailable' });
     }
   });
+
+  app.register(notesRoutes(pool), { prefix: '/api' });
 
   return app;
 }
