@@ -11,7 +11,8 @@
     "dev": "node --watch src/server.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "migrate": "node-pg-migrate --migrations-dir migrations --no-verbose"
+    "migrate": "node-pg-migrate --migrations-dir migrations --no-verbose",
+    "test": "vitest run"
   },
   "dependencies": {
     "fastify": "^5.6.1",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@types/node": "^24.7.2",
     "@types/pg": "^8.15.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }
