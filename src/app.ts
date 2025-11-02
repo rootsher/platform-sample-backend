@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import type pg from 'pg';
+import { metrics } from './metrics.ts';
 import { notesRoutes } from './routes/notes.ts';
 
 export interface AppOptions {
@@ -9,6 +10,8 @@ export interface AppOptions {
 
 export function buildApp({ pool, logLevel = 'info' }: AppOptions) {
   const app = Fastify({ logger: { level: logLevel } });
+
+  metrics(app);
 
   // Liveness only says the process is alive. It must not touch the database,
   // otherwise a short Postgres outage restarts every pod at once.

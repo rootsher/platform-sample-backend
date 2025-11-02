@@ -59,3 +59,12 @@ describe('notes', () => {
     expect(res.statusCode).toBe(404);
   });
 });
+
+describe('metrics', () => {
+  it('records requests by route template', async () => {
+    await app.inject('/api/notes/1');
+    const res = await app.inject('/metrics');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('route="/api/notes/:id"');
+  });
+});
