@@ -24,7 +24,7 @@ export function metrics(app: FastifyInstance) {
     );
   });
 
-  app.get('/metrics', async (_req, reply) => {
+  app.get('/metrics', { logLevel: 'warn' }, async (_req, reply) => {
     reply.type(registry.contentType);
     return registry.metrics();
   });

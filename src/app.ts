@@ -15,9 +15,9 @@ export function buildApp({ pool, logLevel = 'info' }: AppOptions) {
 
   // Liveness only says the process is alive. It must not touch the database,
   // otherwise a short Postgres outage restarts every pod at once.
-  app.get('/healthz', async () => ({ status: 'ok' }));
+  app.get('/healthz', { logLevel: 'warn' }, async () => ({ status: 'ok' }));
 
-  app.get('/readyz', async (_req, reply) => {
+  app.get('/readyz', { logLevel: 'warn' }, async (_req, reply) => {
     try {
       await pool.query('select 1');
       return { status: 'ok' };
