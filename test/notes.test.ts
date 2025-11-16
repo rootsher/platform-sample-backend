@@ -2,6 +2,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.ts';
 import { createPool, migrate } from './helpers.ts';
 
+interface Note {
+  id: string;
+  title: string;
+  body: string;
+}
+
 const pool = createPool();
 const app = buildApp({ pool, logLevel: 'silent' });
 
@@ -34,11 +40,11 @@ describe('notes', () => {
       payload: { title: 'first', body: 'hello' },
     });
     expect(created.statusCode).toBe(201);
-    const { id } = created.json();
+    const { id } = created.json<Note>();
 
     const read = await app.inject(`/api/notes/${id}`);
     expect(read.statusCode).toBe(200);
-    expect(read.json()).toMatchObject({ id, title: 'first', body: 'hello' });
+    expect(read.json<Note>()).toMatchObject({ id, title: 'first', body: 'hello' });
   });
 
   it('lists newest first', async () => {
@@ -46,7 +52,7 @@ describe('notes', () => {
       await app.inject({ method: 'POST', url: '/api/notes', payload: { title } });
     }
     const res = await app.inject('/api/notes?limit=2');
-    expect(res.json().map((n: { title: string }) => n.title)).toEqual(['c', 'b']);
+    expect(res.json<Note[]>().map((n) => n.title)).toEqual(['c', 'b']);
   });
 
   it('rejects an empty title', async () => {

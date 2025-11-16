@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 import type pg from 'pg';
 
 interface Note {
@@ -18,8 +18,8 @@ const note = {
   },
 } as const;
 
-export function notesRoutes(pool: pg.Pool) {
-  return async (app: FastifyInstance) => {
+export function notesRoutes(pool: pg.Pool): FastifyPluginCallback {
+  return (app, _opts, done) => {
     app.get<{ Querystring: { limit: number } }>(
       '/notes',
       {
@@ -82,5 +82,7 @@ export function notesRoutes(pool: pg.Pool) {
         return reply.code(201).send(rows[0]);
       },
     );
+
+    done();
   };
 }

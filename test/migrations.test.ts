@@ -6,7 +6,7 @@ const pool = createPool();
 afterAll(() => pool.end());
 
 async function schema() {
-  const { rows } = await pool.query(`
+  const { rows } = await pool.query<Record<string, string>>(`
     select table_name, column_name, data_type
     from information_schema.columns
     where table_schema = 'public' and table_name <> 'pgmigrations'
