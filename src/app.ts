@@ -13,6 +13,15 @@ export function buildApp({ pool, logLevel = 'info' }: AppOptions) {
 
   metrics(app);
 
+  // Fastify returns the error message by default, which for a failed query
+  // means Postgres internals in the response body. Client errors keep theirs.
+  app.setErrorHandler((err: { statusCode?: number }, req, reply) => {
+    const status = err.statusCode ?? 500;
+    if (status < 500) return reply.send(err);
+    req.log.error({ err }, 'request failed');
+    return reply.code(status).send({ error: 'internal error' });
+  });
+
   // Liveness only says the process is alive. It must not touch the database,
   // otherwise a short Postgres outage restarts every pod at once.
   app.get('/healthz', { logLevel: 'warn' }, () => ({ status: 'ok' }));

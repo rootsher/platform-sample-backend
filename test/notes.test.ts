@@ -74,3 +74,21 @@ describe('metrics', () => {
     expect(res.body).toContain('route="/api/notes/:id"');
   });
 });
+
+describe('errors', () => {
+  it('does not leak database errors to the client', async () => {
+    const brokenPool = createPool();
+    const broken = buildApp({ pool: brokenPool, logLevel: 'silent' });
+    await broken.ready();
+    await pool.query('alter table notes rename to notes_hidden');
+    try {
+      const res = await broken.inject('/api/notes');
+      expect(res.statusCode).toBe(500);
+      expect(res.body).not.toContain('notes');
+    } finally {
+      await pool.query('alter table notes_hidden rename to notes');
+      await broken.close();
+      await brokenPool.end();
+    }
+  });
+});
