@@ -41,3 +41,20 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://app:app@localhost:5432/app_test
       - run: npm run build
+
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: semgrep
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src \
+            semgrep/semgrep:1.145.0@sha256:b68f9b68483955b85042dac7b4533757779625a02dcf91e470da4c2df1b430be \
+            semgrep scan --error --metrics=off \
+              --config p/typescript --config p/nodejs --config p/dockerfile
