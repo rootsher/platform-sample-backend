@@ -5,6 +5,33 @@ A deliberately small Fastify service used to exercise the delivery flow in
 itself is boring on purpose. What matters is what happens to it between a
 commit and a running pod.
 
+## Stack
+
+| Layer | Tool | Role |
+| --- | --- | --- |
+| Runtime | Node.js 24, TypeScript | Node runs the TypeScript sources directly in development; the image ships compiled JavaScript |
+| HTTP | Fastify | routes, JSON schema validation, graceful close |
+| Database | Postgres 18 through `pg` | a plain connection pool, no ORM |
+| Migrations | node-pg-migrate | plain SQL files with an up and a down part |
+| Metrics | `prom-client` | request duration by route template on `/metrics` |
+| Tests | Vitest | run against a real Postgres, including a check that every migration reverses |
+| Lint | ESLint with typescript-eslint | strict, type checked rules |
+| Image | distroless `nodejs24`, non-root | no shell, no package manager, runs as 65532 |
+| CI | GitHub Actions | every action pinned by commit SHA |
+| Secrets scan | gitleaks | full history, not only the diff |
+| Code scan | Semgrep | TypeScript, Node.js and Dockerfile rules |
+| SBOM | Syft | CycloneDX, generated from the built image |
+| Vulnerabilities | Grype | fails the build on high and critical findings that have a fix |
+| Signing | cosign, keyless | signed with the workflow's GitHub OIDC identity and recorded in Rekor |
+| Attestations | cosign, `actions/attest-build-provenance` | the SBOM and SLSA build provenance, attached to the digest |
+| Registry | GHCR | images are addressed by digest from here on |
+| Updates | Renovate | npm packages, base images and action digests |
+
+Everything after the registry (how the digest reaches a cluster, what checks it
+at admission, how it is promoted and rolled back) lives in
+[platform-delivery](https://github.com/rootsher/platform-delivery), which has
+the full flow drawn out.
+
 ## What it does
 
 A notes API on Postgres:
