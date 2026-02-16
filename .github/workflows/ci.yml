@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:18.1-trixie@sha256:1090bc3a8ccfb0b55f78a494d76f8d603434f7e4553543d6e807bc7bd6bbd17f
+        image: postgres:18.2-trixie@sha256:a688ae5c99f86c1424e046ace0de890608cc0ddb5ec8ef72a6ff8305fdc8f4d2
         env:
           POSTGRES_USER: app
           POSTGRES_PASSWORD: app
@@ -55,7 +55,7 @@ jobs:
       - name: semgrep
         run: |
           docker run --rm -v "$PWD:/src" -w /src \
-            semgrep/semgrep:1.150.0@sha256:e520bbf05969b662ec720e3cb685e60a9ed4556b808445a1a7c1d608cea6be69 \
+            semgrep/semgrep:1.151.0@sha256:d3d1be3a3770514d16a6a57b9761575d7536d70f45a5220274f4ec7d55c442b9 \
             semgrep scan --error --metrics=off \
               --config p/typescript --config p/nodejs --config p/dockerfile
 
@@ -80,7 +80,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: build
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           push: ${{ env.PUBLISH == 'true' }}
@@ -97,14 +97,14 @@ jobs:
       # Everything below works on the digest, never on a tag. The digest is
       # what gets signed, scanned and later written into platform-delivery.
       - name: sbom
-        uses: anchore/sbom-action@deef08a0db64bfad603422135db61477b16cef56 # v0.22.1
+        uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
         with:
           image: ${{ env.PUBLISH == 'true' && format('{0}@{1}', env.IMAGE, steps.build.outputs.digest) || format('{0}:sha-{1}', env.IMAGE, github.sha) }}
           format: cyclonedx-json
           output-file: sbom.cdx.json
           upload-artifact: false
       - name: grype
-        uses: anchore/scan-action@8d2fce09422cd6037e577f4130e9b925e9a37175 # v7.3.1
+        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c # v7.3.2
         with:
           sbom: sbom.cdx.json
           fail-build: true
