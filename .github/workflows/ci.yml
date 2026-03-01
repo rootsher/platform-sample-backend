@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:18.2-trixie@sha256:a688ae5c99f86c1424e046ace0de890608cc0ddb5ec8ef72a6ff8305fdc8f4d2
+        image: postgres:18.3-trixie@sha256:7e32e9833a6fb1c92c32552794cb6ed569d51b445a54907d35fc112ef39684db
         env:
           POSTGRES_USER: app
           POSTGRES_PASSWORD: app
@@ -55,7 +55,7 @@ jobs:
       - name: semgrep
         run: |
           docker run --rm -v "$PWD:/src" -w /src \
-            semgrep/semgrep:1.151.0@sha256:d3d1be3a3770514d16a6a57b9761575d7536d70f45a5220274f4ec7d55c442b9 \
+            semgrep/semgrep:1.153.0@sha256:6fe804189b0cc51d2f174882a228666ddb8835685bced62ab3aa8b231b7e6af1 \
             semgrep scan --error --metrics=off \
               --config p/typescript --config p/nodejs --config p/dockerfile
 
@@ -97,7 +97,7 @@ jobs:
       # Everything below works on the digest, never on a tag. The digest is
       # what gets signed, scanned and later written into platform-delivery.
       - name: sbom
-        uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+        uses: anchore/sbom-action@17ae1740179002c89186b61233e0f892c3118b11 # v0.23.0
         with:
           image: ${{ env.PUBLISH == 'true' && format('{0}@{1}', env.IMAGE, steps.build.outputs.digest) || format('{0}:sha-{1}', env.IMAGE, github.sha) }}
           format: cyclonedx-json
@@ -110,7 +110,7 @@ jobs:
           fail-build: true
           severity-cutoff: high
           only-fixed: true
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: sbom
           path: sbom.cdx.json
@@ -125,7 +125,7 @@ jobs:
           cosign sign --yes "$REF"
           cosign attest --yes --type cyclonedx --predicate sbom.cdx.json "$REF"
       - if: env.PUBLISH == 'true'
-        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.build.outputs.digest }}
