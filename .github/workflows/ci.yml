@@ -55,7 +55,7 @@ jobs:
       - name: semgrep
         run: |
           docker run --rm -v "$PWD:/src" -w /src \
-            semgrep/semgrep:1.155.0@sha256:3dab091ee3247fce7e4ed3df9f92b3bd72692c083295f53cec3f135b86404db1 \
+            semgrep/semgrep:1.156.0@sha256:a3d49dc967b8534a6a76628e50c51cbfe33eb7195dc2feab1fdc0f100852c8ef \
             semgrep scan --error --metrics=off \
               --config p/typescript --config p/nodejs --config p/dockerfile
 
@@ -97,14 +97,14 @@ jobs:
       # Everything below works on the digest, never on a tag. The digest is
       # what gets signed, scanned and later written into platform-delivery.
       - name: sbom
-        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           image: ${{ env.PUBLISH == 'true' && format('{0}@{1}', env.IMAGE, steps.build.outputs.digest) || format('{0}:sha-{1}', env.IMAGE, github.sha) }}
           format: cyclonedx-json
           output-file: sbom.cdx.json
           upload-artifact: false
       - name: grype
-        uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c # v7.3.2
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         with:
           sbom: sbom.cdx.json
           fail-build: true
@@ -116,7 +116,7 @@ jobs:
           path: sbom.cdx.json
 
       - if: env.PUBLISH == 'true'
-        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
+        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
       - name: sign and attest
         if: env.PUBLISH == 'true'
         env:
