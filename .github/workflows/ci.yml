@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:18.3-trixie@sha256:7e32e9833a6fb1c92c32552794cb6ed569d51b445a54907d35fc112ef39684db
+        image: postgres:18.4-trixie@sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636
         env:
           POSTGRES_USER: app
           POSTGRES_PASSWORD: app
@@ -55,7 +55,7 @@ jobs:
       - name: semgrep
         run: |
           docker run --rm -v "$PWD:/src" -w /src \
-            semgrep/semgrep:1.161.0@sha256:326e5f41cc972bb423b764a14febbb62bbad29ee1c01820805d077dd868fea48 \
+            semgrep/semgrep:1.163.0@sha256:7cad2bc2d1e44f87f0bf4be6d1fa23aa90fb72015bebc89fb91385d813987a03 \
             semgrep scan --error --metrics=off \
               --config p/typescript --config p/nodejs --config p/dockerfile
 
@@ -116,7 +116,7 @@ jobs:
           path: sbom.cdx.json
 
       - if: env.PUBLISH == 'true'
-        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: sign and attest
         if: env.PUBLISH == 'true'
         env:
