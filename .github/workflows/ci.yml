@@ -67,6 +67,8 @@ jobs:
       packages: write
       id-token: write
       attestations: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     env:
       IMAGE: ghcr.io/${{ github.repository }}
       PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -133,3 +135,53 @@ jobs:
       - name: summary
         if: env.PUBLISH == 'true'
         run: echo "${IMAGE}@${{ steps.build.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # Staging follows main. The digest that was just signed goes to
+  # platform-delivery as a pull request that merges itself once that repo's
+  # checks pass. Prod is promoted from there, by hand.
+  promote:
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.PROMOTION_APP_ID }}
+          private-key: ${{ secrets.PROMOTION_APP_KEY }}
+          repositories: platform-delivery
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ${{ github.repository_owner }}/platform-delivery
+          token: ${{ steps.app.outputs.token }}
+      - name: open the staging pull request
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+          APP_SLUG: ${{ steps.app.outputs.app-slug }}
+          SOURCE: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        run: |
+          values=environments/staging/sample-backend/values.yaml
+          if [[ $(yq '.image.digest' "$values") == "$DIGEST" ]]; then
+            echo "staging already runs $DIGEST" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          user_id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+
+          branch="promote/staging/sample-backend-${GITHUB_SHA:0:12}"
+          git switch -c "$branch"
+          yq -i ".image.digest = \"$DIGEST\"" "$values"
+          git commit -am "feat(staging): deploy sample-backend ${GITHUB_SHA:0:7}"
+          git push -u origin "$branch"
+
+          url=$(gh pr create --base main --head "$branch" \
+            --title "feat(staging): deploy sample-backend ${GITHUB_SHA:0:7}" \
+            --body "Built from $SOURCE.
+
+          \`\`\`
+          $DIGEST
+          \`\`\`")
+          gh pr merge "$url" --auto --squash

@@ -25,6 +25,7 @@ commit and a running pod.
 | Signing | cosign, keyless | signed with the workflow's GitHub OIDC identity and recorded in Rekor |
 | Attestations | cosign, `actions/attest-build-provenance` | the SBOM and SLSA build provenance, attached to the digest |
 | Registry | GHCR | images are addressed by digest from here on |
+| Promotion | GitHub App token, `gh` | opens the staging pull request in platform-delivery |
 | Updates | Renovate | npm packages, base images and action digests |
 
 Everything after the registry (how the digest reaches a cluster, what checks it
@@ -96,6 +97,8 @@ Every pull request and every push to `main` runs:
 
 On `main` the image is also pushed to GHCR, signed with cosign (keyless,
 through the workflow's OIDC identity), and gets the SBOM and SLSA build
-provenance attached as attestations.
+provenance attached as attestations. The last job opens a pull request in
+platform-delivery that moves staging to the new digest and merges itself once
+that repo's checks pass.
 
 Dependencies, base images and action digests are kept current by Renovate.
