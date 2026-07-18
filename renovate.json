@@ -14,6 +14,11 @@
       "automerge": true
     },
     {
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<6.1",
+      "description": "typescript-eslint does not support the native 7.x compiler yet"
+    },
+    {
       "matchPackageNames": ["@types/node"],
       "allowedVersions": "<25",
       "description": "Types follow the Node major the image runs on"
