@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import client from 'prom-client';
+import client from '@prometheus-io/client';
 
 export function metrics(app: FastifyInstance) {
   const registry = new client.Registry();

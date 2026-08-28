@@ -13,7 +13,7 @@ commit and a running pod.
 | HTTP | Fastify | routes, JSON schema validation, graceful close |
 | Database | Postgres 18 through `pg` | a plain connection pool, no ORM |
 | Migrations | node-pg-migrate | plain SQL files with an up and a down part |
-| Metrics | `prom-client` | request duration by route template on `/metrics` |
+| Metrics | `@prometheus-io/client` | request duration by route template on `/metrics` |
 | Tests | Vitest | run against a real Postgres, including a check that every migration reverses |
 | Lint | ESLint with typescript-eslint | strict, type checked rules |
 | Image | distroless `nodejs24`, non-root | no shell, no package manager, runs as 65532 |
