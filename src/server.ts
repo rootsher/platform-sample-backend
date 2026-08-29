@@ -1,6 +1,7 @@
 import pg from 'pg';
 import { buildApp } from './app.ts';
 import { loadConfig } from './config.ts';
+import { shutdownTelemetry } from './telemetry.ts';
 
 const config = loadConfig();
 const pool = new pg.Pool({ connectionString: config.databaseUrl });
@@ -19,6 +20,7 @@ async function shutdown(signal: string) {
 
   await app.close();
   await pool.end();
+  await shutdownTelemetry();
   process.exit(0);
 }
 

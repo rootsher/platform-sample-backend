@@ -20,4 +20,4 @@ EXPOSE 8080
 # The base image's entrypoint is node itself. The migration job reuses this
 # image and only swaps the arguments, so the schema and the code that needs it
 # always ship in the same digest.
-CMD ["dist/server.js"]
+CMD ["--import", "./dist/telemetry.js", "dist/server.js"]

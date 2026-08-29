@@ -14,6 +14,7 @@ commit and a running pod.
 | Database | Postgres 18 through `pg` | a plain connection pool, no ORM |
 | Migrations | node-pg-migrate | plain SQL files with an up and a down part |
 | Metrics | `@prometheus-io/client` | request duration by route template on `/metrics` |
+| Tracing | OpenTelemetry SDK | spans for HTTP, Fastify routes and Postgres queries over OTLP; off unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set |
 | Tests | Vitest | run against a real Postgres, including a check that every migration reverses |
 | Lint | ESLint with typescript-eslint | strict, type checked rules |
 | Image | distroless `nodejs24`, non-root | no shell, no package manager, runs as 65532 |
@@ -49,6 +50,8 @@ Plus the endpoints the platform relies on:
   does not restart every pod at once.
 - `/readyz` for readiness, which does check the database.
 - `/metrics` in Prometheus format, with request duration by route template.
+- Traces over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. The SDK is
+  loaded with `--import` before the app, and flushed during shutdown.
 
 On SIGTERM it stops accepting connections, finishes what is in flight and
 closes the pool.
