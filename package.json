@@ -16,23 +16,23 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@fastify/otel": "^0.20.1",
+    "@fastify/otel": "^0.21.0",
     "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/instrumentation-http": "^0.221.0",
-    "@opentelemetry/instrumentation-pg": "^0.73.0",
-    "@opentelemetry/sdk-node": "^0.221.0",
+    "@opentelemetry/instrumentation-http": "^0.222.0",
+    "@opentelemetry/instrumentation-pg": "^0.74.0",
+    "@opentelemetry/sdk-node": "^0.222.0",
     "@prometheus-io/client": "^0.16.1",
-    "fastify": "^5.12.1",
+    "fastify": "^5.12.3",
     "node-pg-migrate": "^9.0.0",
     "pg": "^8.23.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^24.13.3",
+    "@types/node": "^24.13.4",
     "@types/pg": "^8.23.1",
-    "eslint": "^10.9.1",
+    "eslint": "^10.10.0",
     "typescript": "~6.0",
-    "typescript-eslint": "^8.68.0",
-    "vitest": "^4.1.11"
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
   }
 }
