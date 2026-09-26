@@ -7,18 +7,27 @@ import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 
+// Probes and scrapes would be most of the traces and none of the value.
+const untraced = new Set(['/healthz', '/readyz', '/metrics']);
+const path = (url = '') => url.split('?', 1)[0] ?? '';
+
 // Without an endpoint there is nowhere to send spans: tests and local runs
 // start without the SDK instead of logging export failures.
 const sdk = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
   ? new NodeSDK({
       instrumentations: [
+        // Both layers have to skip them: with no HTTP span, the Fastify
+        // instrumentation would start a root span of its own.
         new HttpInstrumentation({
-          // Probes and scrapes would be most of the traces and none of the value.
-          ignoreIncomingRequestHook: (req) =>
-            ['/healthz', '/readyz', '/metrics'].includes(req.url ?? ''),
+          ignoreIncomingRequestHook: (req) => untraced.has(path(req.url)),
         }),
-        new PgInstrumentation(),
-        new FastifyOtelInstrumentation({ registerOnInitialization: true }),
+        new FastifyOtelInstrumentation({
+          registerOnInitialization: true,
+          ignorePaths: ({ url }) => untraced.has(path(url)),
+        }),
+        // Queries only as part of a request; the readiness check's select 1
+        // has no parent and is dropped.
+        new PgInstrumentation({ requireParentSpan: true }),
       ],
     })
   : undefined;
