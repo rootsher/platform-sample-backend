@@ -44,7 +44,13 @@ export function notesRoutes(pool: pg.Pool): FastifyPluginCallback {
       '/notes/:id',
       {
         schema: {
-          params: { type: 'object', properties: { id: { type: 'string', pattern: '^[0-9]+$' } } },
+          params: { type: 'object', properties: { id: {
+                type: 'string',
+                pattern: '^[0-9]+$',
+                // Longer ids overflow bigint, which Postgres reports as an error:
+                // a 500 anyone could produce, spending the availability budget.
+                maxLength: 18,
+              }, } },
           response: { 200: note },
         },
       },
