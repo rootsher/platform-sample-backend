@@ -1,4 +1,4 @@
-import Fastify from 'fastify';
+import Fastify, { type FastifyError } from 'fastify';
 import type pg from 'pg';
 import { metrics } from './metrics.ts';
 import { notesRoutes } from './routes/notes.ts';
@@ -15,7 +15,7 @@ export function buildApp({ pool, logLevel = 'info' }: AppOptions) {
 
   // Fastify returns the error message by default, which for a failed query
   // means Postgres internals in the response body. Client errors keep theirs.
-  app.setErrorHandler((err: { statusCode?: number }, req, reply) => {
+  app.setErrorHandler((err: FastifyError, req, reply) => {
     const status = err.statusCode ?? 500;
     if (status < 500) return reply.send(err);
     req.log.error({ err }, 'request failed');
