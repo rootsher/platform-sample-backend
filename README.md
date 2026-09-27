@@ -80,7 +80,8 @@ Plain SQL files in `migrations/`, applied with
 [node-pg-migrate](https://github.com/salsita/node-pg-migrate). Every file has
 an up and a down part, and a test walks all of them up and back down one step
 at a time, comparing the schema after each down with what it was before the
-matching up.
+matching up: columns with their defaults and nullability, constraints,
+indexes, sequences, types and functions.
 
 The image ships with its migrations. In the cluster they run as a separate job
 from the same digest before the new pods start, so code and schema cannot drift

@@ -53,10 +53,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      # The CLI rather than the action: the action only scans the commits of
+      # the push or pull request, and a secret committed and then deleted is
+      # still in the history.
       - name: gitleaks
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            git --redact --no-banner --exit-code 1 .
       - name: semgrep
         run: |
           docker run --rm -v "$PWD:/src" -w /src \
@@ -92,9 +96,10 @@ jobs:
           context: .
           push: ${{ env.PUBLISH == 'true' }}
           load: ${{ env.PUBLISH != 'true' }}
-          tags: |
-            ${{ env.IMAGE }}:sha-${{ github.sha }}
-            ${{ env.PUBLISH == 'true' && format('{0}:main', env.IMAGE) || '' }}
+          # No moving tag such as :main. The image is pushed before it is
+          # scanned and signed, and a tag would keep pointing at it even if
+          # grype fails it. Everything downstream uses the digest.
+          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -176,17 +181,21 @@ jobs:
           git config user.name "${APP_SLUG}[bot]"
           git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
 
-          branch="promote/staging/sample-backend-${GITHUB_SHA:0:12}"
-          git switch -c "$branch"
-          yq -i ".image.digest = \"$DIGEST\"" "$values"
-          git commit -am "feat(staging): deploy sample-backend ${GITHUB_SHA:0:7}"
-          git push -u origin "$branch"
+          # One branch and one open pull request at a time. A newer build
+          # replaces the digest in it instead of opening a second PR that
+          # would conflict with the first; re-running the job is harmless.
+          branch=promote/staging/sample-backend
+          title="feat(staging): deploy sample-backend ${GITHUB_SHA:0:7}"
+          git switch -C "$branch"
+          DIGEST=$DIGEST yq -i '.image.digest = strenv(DIGEST)' "$values"
+          git commit -am "$title"
+          git push --force origin "$branch"
 
-          url=$(gh pr create --base main --head "$branch" \
-            --title "feat(staging): deploy sample-backend ${GITHUB_SHA:0:7}" \
-            --body "Built from $SOURCE.
-
-          \`\`\`
-          $DIGEST
-          \`\`\`")
+          body=$(printf 'Built from %s.\n\n```\n%s\n```' "$SOURCE" "$DIGEST")
+          url=$(gh pr view "$branch" --json url,state --jq 'select(.state == "OPEN") | .url' 2>/dev/null || true)
+          if [[ -n $url ]]; then
+            gh pr edit "$url" --title "$title" --body "$body"
+          else
+            url=$(gh pr create --base main --head "$branch" --title "$title" --body "$body")
+          fi
           gh pr merge "$url" --auto --squash
