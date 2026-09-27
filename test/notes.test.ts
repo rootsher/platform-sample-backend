@@ -76,19 +76,20 @@ describe('metrics', () => {
 });
 
 describe('errors', () => {
+  it('rejects ids that would overflow bigint instead of failing with a 500', async () => {
+    const res = await app.inject('/api/notes/99999999999999999999');
+    expect(res.statusCode).toBe(400);
+  });
+
+
   it('does not leak database errors to the client', async () => {
-    const brokenPool = createPool();
-    const broken = buildApp({ pool: brokenPool, logLevel: 'silent' });
-    await broken.ready();
     await pool.query('alter table notes rename to notes_hidden');
     try {
-      const res = await broken.inject('/api/notes');
+      const res = await app.inject('/api/notes');
       expect(res.statusCode).toBe(500);
-      expect(res.body).not.toContain('notes');
+      expect(res.json()).toEqual({ error: 'internal error' });
     } finally {
       await pool.query('alter table notes_hidden rename to notes');
-      await broken.close();
-      await brokenPool.end();
     }
   });
 });
