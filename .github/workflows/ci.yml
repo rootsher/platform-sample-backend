@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Builds and promotes main again without a new commit, for when the
+  # promotion app or the delivery repo changed rather than the code.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -159,7 +162,7 @@ jobs:
   # checks pass. Prod is promoted from there, by hand.
   promote:
     needs: image
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     steps:
       - id: app
