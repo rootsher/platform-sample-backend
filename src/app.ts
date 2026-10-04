@@ -6,9 +6,10 @@ import { notesRoutes } from './routes/notes.ts';
 export interface AppOptions {
   pool: pg.Pool;
   logLevel?: string;
+  faultErrorRate?: number;
 }
 
-export function buildApp({ pool, logLevel = 'info' }: AppOptions) {
+export function buildApp({ pool, logLevel = 'info', faultErrorRate = 0 }: AppOptions) {
   const app = Fastify({ logger: { level: logLevel } });
 
   metrics(app);
@@ -35,6 +36,17 @@ export function buildApp({ pool, logLevel = 'info' }: AppOptions) {
       return reply.code(503).send({ status: 'unavailable' });
     }
   });
+
+  // For release drills only. A share of /api requests fails while probes and
+  // metrics keep working, which is how a bad release looks to a canary
+  // analysis: ready pods, rising 5xx. Off unless FAULT_ERROR_RATE is set.
+  if (faultErrorRate > 0) {
+    app.addHook('onRequest', async (req, reply) => {
+      if (req.url.startsWith('/api/') && Math.random() < faultErrorRate) {
+        return reply.code(500).send({ error: 'injected fault' });
+      }
+    });
+  }
 
   app.register(notesRoutes(pool), { prefix: '/api' });
 

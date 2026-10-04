@@ -10,7 +10,11 @@ const pool = new pg.Pool({
   // unreachable, instead of failing fast and letting the pod go unready.
   connectionTimeoutMillis: 2_000,
 });
-const app = buildApp({ pool, logLevel: config.logLevel });
+const app = buildApp({
+  pool,
+  logLevel: config.logLevel,
+  faultErrorRate: config.faultErrorRate,
+});
 
 // An idle client whose connection drops (a Postgres restart, a CloudNativePG
 // failover) is reported here. Without a listener the event is thrown and the

@@ -93,3 +93,24 @@ describe('errors', () => {
     }
   });
 });
+
+describe('fault injection', () => {
+  const faulty = buildApp({ pool, logLevel: 'silent', faultErrorRate: 1 });
+
+  beforeAll(() => faulty.ready());
+  afterAll(() => faulty.close());
+
+  it('fails api requests and counts them as 5xx', async () => {
+    const res = await faulty.inject('/api/notes');
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toEqual({ error: 'injected fault' });
+
+    const metrics = await faulty.inject('/metrics');
+    expect(metrics.body).toMatch(/route="\/api\/notes",status_code="500"/);
+  });
+
+  it('leaves the probes alone, so the pod stays ready', async () => {
+    expect((await faulty.inject('/healthz')).statusCode).toBe(200);
+    expect((await faulty.inject('/readyz')).statusCode).toBe(200);
+  });
+});

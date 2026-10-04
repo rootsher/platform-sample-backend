@@ -52,6 +52,9 @@ Plus the endpoints the platform relies on:
 - `/metrics` in Prometheus format, with request duration by route template.
 - Traces over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. The SDK is
   loaded with `--import` before the app, and flushed during shutdown.
+- `FAULT_ERROR_RATE`, between 0 and 1, fails that share of `/api` requests
+  with a 500 while the probes keep passing. It exists for release drills, to
+  show that a canary analysis catches what readiness cannot. Off by default.
 
 On SIGTERM it stops accepting connections, finishes what is in flight and
 closes the pool.
